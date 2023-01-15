@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eufylife-ble-client"
-version = "0.1.5"
+version = "0.1.6"
 description = "A library to communicate with EufyLife Bluetooth devices."
 authors = ["Brandon Rothweiler <brandonrothweiler@gmail.com>"]
 license = "MIT"
