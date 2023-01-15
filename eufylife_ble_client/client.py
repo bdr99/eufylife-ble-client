@@ -249,14 +249,14 @@ class EufyLifeBLEDevice:
             if len(data) == 19 and data[6] == 0xCF:
                 self._handle_advertisement_weight_update_t9148_t9149(data[6:])
 
-
     def _handle_advertisement_weight_update_t9148_t9149(self, data: bytearray) -> None:
         weight_kg = ((data[4] << 8) | data[3]) / 100
+        is_final = data[9] == 0x00
+        final_weight_kg = weight_kg if is_final else None
         has_heart_rate = (data[2] >> 6 == 0b11)
         heart_rate = data[1] if has_heart_rate else None
-        is_final = data[9] == 0x00
 
-        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, heart_rate, is_final, False))
+        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, heart_rate, False))
 
     def _handle_weight_update_t9140(self, data: bytearray) -> None:
         if len(data) < 7 or data[6] not in [0xCA, 0xCE]:
@@ -264,8 +264,9 @@ class EufyLifeBLEDevice:
 
         weight_kg = ((data[2] << 8) | data[3]) / 10
         is_final = data[6] == 0xCA
+        final_weight_kg = weight_kg if is_final else None
 
-        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, None, is_final, False))
+        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, None, False))
 
     def _handle_weight_update_t9146_t9147(self, data: bytearray) -> None:
         if len(data) != 11 or data[0] != 0xCF:
@@ -273,9 +274,10 @@ class EufyLifeBLEDevice:
 
         weight_kg = ((data[4] << 8) | data[3]) / 100
         is_final = data[9] == 0x00
+        final_weight_kg = weight_kg if is_final else None
         weight_limit_exceeded = data[9] == 0x02
 
-        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, None, is_final, weight_limit_exceeded))
+        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, None, weight_limit_exceeded))
 
     def _handle_weight_update_t9148_t9149(self, data: bytearray) -> None:
         if len(data) != 16 or data[0] != 0xCF or data[2] != 0x00:
@@ -284,8 +286,9 @@ class EufyLifeBLEDevice:
         weight_kg = ((data[7] << 8) | data[6]) / 100
         #impedance = (data[10] << 16) | (data[9] << 8) | data[8]
         is_final = data[12] == 0x00
+        final_weight_kg = weight_kg if is_final else None
 
-        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, None, is_final, False))
+        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, None, False))
 
     def _notification_handler_auth(self, _sender: int, data: bytearray) -> None:
         """Handle notification responses on the auth characteristic."""

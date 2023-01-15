@@ -17,6 +17,6 @@ class DeviceModel:
 @dataclass(frozen=True)
 class EufyLifeBLEState:
     weight_kg: float = 0
+    final_weight_kg: float = 0
     heart_rate: float = 0
-    is_final: bool = False
     max_weight_exceeded: bool = False
