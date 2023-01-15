@@ -15,6 +15,14 @@ from .auth_handler import AuthHandler
 from .models import DeviceModel, EufyLifeBLEState
 from . import util
 
+MODEL_TO_NAME = {
+    "eufy T9140": "Smart Scale",
+    "eufy T9146": "Smart Scale C1",
+    "eufy T9147": "Smart Scale P1",
+    "eufy T9148": "Smart Scale P2",
+    "eufy T9149": "Smart Scale P2 Pro",
+}
+
 MODELS: dict[str, DeviceModel] = {
     "eufy T9140": DeviceModel(
         name="Smart Scale",
