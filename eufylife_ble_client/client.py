@@ -255,6 +255,8 @@ class EufyLifeBLEDevice:
         final_weight_kg = weight_kg if is_final else None
         has_heart_rate = (data[2] >> 6 == 0b11)
         heart_rate = data[1] if has_heart_rate else None
+        if heart_rate == 0:
+            heart_rate = None
 
         self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, heart_rate, False))
 
