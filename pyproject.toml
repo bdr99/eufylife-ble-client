@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "eufylife-ble-client"
+version = "0.1.2"
+description = "A library to communicate with EufyLife Bluetooth devices."
+authors = ["Brandon Rothweiler <brandonrothweiler@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "eufylife_ble_client"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+bleak = ">=0.19.0"
+bleak-retry-connector = ">=2.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
