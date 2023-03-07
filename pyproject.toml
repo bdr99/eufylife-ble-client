@@ -5,6 +5,7 @@ description = "A library to communicate with EufyLife Bluetooth devices."
 authors = ["Brandon Rothweiler <brandonrothweiler@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/bdr99/eufylife-ble-client"
 packages = [{include = "eufylife_ble_client"}]
 
 [tool.poetry.dependencies]
