@@ -8,11 +8,11 @@ class DeviceModel:
     name: str
     advertisement_data_contains_state: bool
 
-    notify_characteristic: str
-    write_characteristic: str
-    battery_characteristic: str
+    notify_characteristics: list[str]
+    write_characteristics: list[str]
+    battery_characteristics: list[str]
 
-    auth_characteristic: str | None = None
+    auth_characteristics: list[str]
 
 @dataclass(frozen=True)
 class EufyLifeBLEState:

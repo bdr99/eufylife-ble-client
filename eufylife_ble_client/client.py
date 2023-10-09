@@ -27,39 +27,42 @@ MODELS: dict[str, DeviceModel] = {
     "eufy T9140": DeviceModel(
         name="Smart Scale",
         advertisement_data_contains_state=False,
-        notify_characteristic="4143f7b2-5300-4900-4700-414943415245",
-        write_characteristic="4143f7b1-5300-4900-4700-414943415245",
-        battery_characteristic="00002A19-0000-1000-8000-00805f9b34fb"
+        auth_characteristics=[],
+        notify_characteristics=["4143f7b2-5300-4900-4700-414943415245", "4143f6b2-5300-4900-4700-414943415245", "0000ffb2-0000-1000-8000-00805f9b34fb"],
+        write_characteristics=["4143f7b1-5300-4900-4700-414943415245", "4143f6b1-5300-4900-4700-414943415245", "0000ffb1-0000-1000-8000-00805f9b34fb"],
+        battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
     ),
     "eufy T9146": DeviceModel(
         name="Smart Scale C1",
         advertisement_data_contains_state=True,
-        notify_characteristic="0000FFF4-0000-1000-8000-00805f9b34fb",
-        write_characteristic="0000FFF1-0000-1000-8000-00805f9b34fb",
-        battery_characteristic="00002A19-0000-1000-8000-00805f9b34fb"
+        auth_characteristics=[],
+        notify_characteristics=["0000FFF4-0000-1000-8000-00805f9b34fb"],
+        write_characteristics=["0000FFF1-0000-1000-8000-00805f9b34fb"],
+        battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
     ),
     "eufy T9147": DeviceModel(
         name="Smart Scale P1",
         advertisement_data_contains_state=True,
-        notify_characteristic="0000FFF4-0000-1000-8000-00805f9b34fb",
-        write_characteristic="0000FFF1-0000-1000-8000-00805f9b34fb",
-        battery_characteristic="00002A19-0000-1000-8000-00805f9b34fb"
+        auth_characteristics=[],
+        notify_characteristics=["0000FFF4-0000-1000-8000-00805f9b34fb"],
+        write_characteristics=["0000FFF1-0000-1000-8000-00805f9b34fb"],
+        battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
     ),
     "eufy T9148": DeviceModel(
         name="Smart Scale P2",
         advertisement_data_contains_state=True,
-        auth_characteristic="0000FFF4-0000-1000-8000-00805f9b34fb",
-        notify_characteristic="0000FFF2-0000-1000-8000-00805f9b34fb",
-        write_characteristic="0000FFF1-0000-1000-8000-00805f9b34fb",
-        battery_characteristic="00002A19-0000-1000-8000-00805f9b34fb"
+        auth_characteristics=["0000FFF4-0000-1000-8000-00805f9b34fb"],
+        notify_characteristics=["0000FFF2-0000-1000-8000-00805f9b34fb"],
+        write_characteristics=["0000FFF1-0000-1000-8000-00805f9b34fb"],
+        battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
     ),
     "eufy T9149": DeviceModel(
         name="Smart Scale P2 Pro",
         advertisement_data_contains_state=True,
-        auth_characteristic="0000FFF4-0000-1000-8000-00805f9b34fb",
-        notify_characteristic="0000FFF2-0000-1000-8000-00805f9b34fb",
-        write_characteristic="0000FFF1-0000-1000-8000-00805f9b34fb",
-        battery_characteristic="00002A19-0000-1000-8000-00805f9b34fb"
+        auth_characteristics=["0000FFF4-0000-1000-8000-00805f9b34fb"],
+        notify_characteristics=["0000FFF2-0000-1000-8000-00805f9b34fb"],
+        write_characteristics=["0000FFF1-0000-1000-8000-00805f9b34fb"],
+        battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
     )
 }
 
@@ -382,15 +385,14 @@ class EufyLifeBLEDevice:
 
     def _resolve_characteristics(self, services: BleakGATTServiceCollection) -> bool:
         """Resolve characteristics."""
-        model = self._model
+        self._auth_char = self._resolve_characteristic(services, self._model.auth_characteristics)
+        self._notify_char = self._resolve_characteristic(services, self._model.notify_characteristics)
+        self._write_char = self._resolve_characteristic(services, self._model.write_characteristics)
+        self._battery_char = self._resolve_characteristic(services, self._model.battery_characteristics)
 
-        if model.auth_characteristic is not None:
-            if char := services.get_characteristic(model.auth_characteristic):
-                self._auth_char = char
-        if char := services.get_characteristic(model.notify_characteristic):
-            self._notify_char = char
-        if char := services.get_characteristic(model.write_characteristic):
-            self._write_char = char
-        if char := services.get_characteristic(model.battery_characteristic):
-            self._battery_char = char
-        return bool((self._auth_char or model.auth_characteristic is None) and self._notify_char and self._write_char and self._battery_char)
+        return bool((self._auth_char or len(self._model.auth_characteristics) == 0) and self._notify_char and self._write_char and self._battery_char)
+
+    def _resolve_characteristic(self, services: BleakGATTServiceCollection, candidate_characteristics: list[str]):
+        for characteristic in candidate_characteristics:
+            if char := services.get_characteristic(characteristic):
+                return char
