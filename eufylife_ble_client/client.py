@@ -16,14 +16,24 @@ from .models import DeviceModel, EufyLifeBLEState
 from . import util
 
 MODEL_TO_NAME = {
+    "eufy T9130": "Smart Scale C20",
     "eufy T9140": "Smart Scale",
     "eufy T9146": "Smart Scale C1",
     "eufy T9147": "Smart Scale P1",
     "eufy T9148": "Smart Scale P2",
     "eufy T9149": "Smart Scale P2 Pro",
+    "eufy T9150": "Smart Scale P3",
 }
 
 MODELS: dict[str, DeviceModel] = {
+    "eufy T9130": DeviceModel(
+        name="Smart Scale C20",
+        advertisement_data_contains_state=True,
+        auth_characteristics=[],
+        notify_characteristics=[],
+        write_characteristics=[],
+        battery_characteristics=[]
+    ),
     "eufy T9140": DeviceModel(
         name="Smart Scale",
         advertisement_data_contains_state=False,
@@ -63,6 +73,14 @@ MODELS: dict[str, DeviceModel] = {
         notify_characteristics=["0000FFF2-0000-1000-8000-00805f9b34fb"],
         write_characteristics=["0000FFF1-0000-1000-8000-00805f9b34fb"],
         battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
+    ),
+    "eufy T9150": DeviceModel(
+        name="Smart Scale P3",
+        advertisement_data_contains_state=True,
+        auth_characteristics=[],
+        notify_characteristics=[],
+        write_characteristics=[],
+        battery_characteristics=[]
     )
 }
 
@@ -145,6 +163,7 @@ class EufyLifeBLEDevice:
         await self._execute_disconnect()
 
     def _set_state_and_fire_callbacks(self, state: EufyLifeBLEState) -> None:
+        _LOGGER.debug("Setting state and firing callbacks: %s", state)
         if self._state != state:
             self._state = state
             self._fire_callbacks()
@@ -241,9 +260,26 @@ class EufyLifeBLEDevice:
         if not manufacturer_data:
             return
 
-        data = list(manufacturer_data.values())[-1]
+        values = list(manufacturer_data.values())
 
-        if self._model_id in ["eufy T9146", "eufy T9147"]:
+        if len(values) > 1:
+            _LOGGER.debug("Multiple advertisement packets found: %s", values)
+            if self._model_id in ["eufy T9130", "eufy T9150"]:
+                valid_data = next((data for data in values if len(data) >= 18 and data[10] in [0x01, 0x05]), None)
+                if valid_data is None:
+                    return
+                data = valid_data
+            else:
+                data = values[-1]
+        else:
+            data = values[-1]
+
+        _LOGGER.debug("Handling advertisement data: %s", data.hex())
+
+        if self._model_id in ["eufy T9130", "eufy T9150"]:
+            if len(data) >= 18 and data[10] in [0x01, 0x05]:
+                self._handle_advertisement_weight_update_t9130_t9150(data)
+        elif self._model_id in ["eufy T9146", "eufy T9147"]:
             if len(data) == 18 and data[4] == 0xCF:
                 data_range = data[4:15]
                 if util.validate_checksum(data_range):
@@ -251,6 +287,13 @@ class EufyLifeBLEDevice:
         elif self._model_id in ["eufy T9148", "eufy T9149"]:
             if len(data) == 19 and data[6] == 0xCF:
                 self._handle_advertisement_weight_update_t9148_t9149(data[6:])
+
+    def _handle_advertisement_weight_update_t9130_t9150(self, data: bytearray) -> None:
+        weight_kg = ((data[13] << 8) | data[12]) / 100
+        is_final = data[10] == 0x05
+        final_weight_kg = weight_kg if is_final else None
+
+        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, None, False))
 
     def _handle_advertisement_weight_update_t9148_t9149(self, data: bytearray) -> None:
         weight_kg = ((data[4] << 8) | data[3]) / 100
