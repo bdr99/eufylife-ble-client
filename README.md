@@ -6,6 +6,7 @@ This is a library for parsing data from Eufy smart scales that use the EufyLife 
 
 | Model | Name               |
 | ----- | ------------------ |
+| T9120 | Smart Scale A1     |
 | T9130 | Smart Scale C20    |
 | T9140 | Smart Scale        |
 | T9146 | Smart Scale C1     |

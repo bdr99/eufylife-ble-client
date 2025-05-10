@@ -16,6 +16,7 @@ from .models import DeviceModel, EufyLifeBLEState
 from . import util
 
 MODEL_TO_NAME = {
+    "eufy T9120": "Smart Scale A1",
     "eufy T9130": "Smart Scale C20",
     "eufy T9140": "Smart Scale",
     "eufy T9146": "Smart Scale C1",
@@ -26,6 +27,14 @@ MODEL_TO_NAME = {
 }
 
 MODELS: dict[str, DeviceModel] = {
+    "eufy T9120": DeviceModel(
+        name="Smart Scale A1",
+        advertisement_data_contains_state=False,
+        auth_characteristics=[],
+        notify_characteristics=["0000FFF4-0000-1000-8000-00805f9b34fb"],
+        write_characteristics=["0000FFF1-0000-1000-8000-00805f9b34fb"],
+        battery_characteristics=["00002A19-0000-1000-8000-00805f9b34fb"]
+    ),
     "eufy T9130": DeviceModel(
         name="Smart Scale C20",
         advertisement_data_contains_state=True,
@@ -306,6 +315,17 @@ class EufyLifeBLEDevice:
 
         self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, heart_rate, False))
 
+    def _handle_weight_update_t9120(self, data: bytearray) -> None:
+        if len(data) != 11 or data[0] != 0xCF:
+            return
+
+        weight_kg = ((data[4] << 8) | data[3]) / 100
+        is_final = data[9] == 0x00
+        final_weight_kg = weight_kg if is_final else None
+        weight_limit_exceeded = data[9] == 0x02
+
+        self._set_state_and_fire_callbacks(EufyLifeBLEState(weight_kg, final_weight_kg, None, weight_limit_exceeded))
+
     def _handle_weight_update_t9140(self, data: bytearray) -> None:
         if len(data) < 7 or data[6] not in [0xCA, 0xCE]:
             return
@@ -352,6 +372,9 @@ class EufyLifeBLEDevice:
         """Handle notification responses."""
         _LOGGER.debug("%s: Notification received: %s", self._model_id, data.hex())
 
+        if self._model_id == "eufy T9120":
+            if len(data) == 11 and data[0] == 0xCF:
+                self._handle_weight_update_t9120(data)
         if self._model_id == "eufy T9140":
             if len(data) >= 2 and data[0] == 0xAC and data[1] == 0x02:
                 if len(data) == 16:
